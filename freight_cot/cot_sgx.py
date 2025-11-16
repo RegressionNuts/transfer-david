@@ -311,7 +311,7 @@ def send_email(subject, body, is_success=True, file_attachment=None):
         # Configure email
         mail.Subject = subject
         mail.Body = body
-        mail.To = [ "david.li@olam-agri.com"]  # Replace with your email
+        mail.To = "yuhang.hou@olam-agri.com" # Replace with your email
         
         if file_attachment is not None:
             for file in file_attachment:
@@ -325,6 +325,7 @@ def send_email(subject, body, is_success=True, file_attachment=None):
         logger.error(f"Failed to send email: {str(e)}")
         mail.subject = "Failed Title"
         mail.body = "The job failed. Please check the details from the log."
+        mail.To = "yuhang.hou@olam-agri.com"  # Replace with your email
         file_path = os.path.abspath('path of your log')
         mail.Attachments.Add(file_path)
         mail.Send()
