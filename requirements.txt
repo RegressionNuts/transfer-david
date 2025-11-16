@@ -1,0 +1,14 @@
+pandas
+numpy
+requests
+bs4
+sqlalchemy
+python-dateutil
+pydantic
+pyodbc
+python-json-logger==2.0.7
+pydantic-settings==2.4.0
+holidays
+pywin32
+matplotlib
+openpyxl
