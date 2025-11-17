@@ -48,6 +48,9 @@ NUM_TO_MONTH = {
     }
 
 def generate_sql_query(data_type, symbol, start_date):
+    '''
+    generate sql query
+    '''
     if data_type == '':
         query_str =  f"""
             SELECT 
@@ -88,6 +91,9 @@ def generate_sql_query(data_type, symbol, start_date):
     return query_str
 
 def load_db_data(symbol,start_date,data_type = ''):
+    '''
+    load data from database
+    '''
     server = SERVER_INFO['server']
     instance = SERVER_INFO['instance']
     port= SERVER_INFO['port']
@@ -104,7 +110,6 @@ def load_db_data(symbol,start_date,data_type = ''):
         "TrustServerCertificate=yes;"  
         "Connection Timeout=30;"       # Increase if needed
     )
-    print(params)
     connection_string = f"mssql+pyodbc:///?odbc_connect={params}"
     engine = create_engine(
         connection_string,
@@ -160,10 +165,19 @@ def quarter_mapping(month):
     return month_dict[month[:3]] + month[-2:]
 
 def year_mapping(month):
+    '''
+    transfer month of format Dec-25 to YZ25
+    params month: str with format Dec-25
+    return: str, month code for future contract
+    '''
     return 'YZ'+ month[-2:]
 
 def save_contracts_to_csv(df, file_path):
-
+    '''
+    save contracts to csv
+    params df: pandas dataframe with columns date, month_code, close
+    params file_path: str, path to save csv file
+    '''
     def process_and_save_contracts(contract_df, mapping_func):
 
         contract_df['month_code'] = contract_df['month_code'].apply(mapping_func)
@@ -271,6 +285,9 @@ def save_spot_to_csv(df, file_path):
         print("Created new spot data file")
 
 def _check_mismatch(df1, df2, dates, _column):
+    '''
+    Check for mismatch between existing and new data
+    '''
     mismatch = ~np.isclose(
         df1.loc[dates, _column],
         df2[_column],
@@ -286,21 +303,33 @@ def _check_mismatch(df1, df2, dates, _column):
         )
 
 def load_business_days():
+    '''
+    Load business days
+    '''
     with open('freight_price/business_days.json', 'r') as f:
         business_days = json.load(f)
     return [pd.to_datetime(i) for i in business_days]
 
 def last_day_of_quarter(_date):
+    '''
+    Get last day of quarter
+    '''
     new_date = pd.to_datetime(_date)
     next_q_end = new_date + BQuarterEnd(0)
     return next_q_end
 
 
 def last_day_of_year(_date):
+    '''
+    Get last day of year
+    '''
     _date = pd.to_datetime(_date)
     return pd.to_datetime(f'{_date.year}-12-31' )
 
 def date_to_month(_date, contract_type = 'monthly'):
+    '''
+    Convert date to month code
+    '''
     _date = pd.to_datetime(_date)
     month_code = NUM_TO_MONTH[_date.month]
     year_code = str(_date.year)[-2:]  # Last 2 digits of year
@@ -315,6 +344,9 @@ def date_to_month(_date, contract_type = 'monthly'):
         raise ValueError(f"Unsupported contract type: {contract_type}")
 
 def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly'):
+    '''
+    Get nth nearby contract
+    '''
     buz_days = load_business_days()
     future_dates  =[ i  for i in buz_days if i > _date]  
     new_date = future_dates[preroll]
@@ -344,6 +376,9 @@ def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly')
         return 'Y' + code
 
 def _calculate_nearby_data(df, k_nearby, roll_schedule, contract_type):
+    '''
+    Calculate nearby data
+    '''
     k_nearby_spot = [nth_nearby(date, k_nearby, roll_schedule, contract_type=contract_type) 
                     for date in df.index]
     k_nearby_return = [nth_nearby(date, k_nearby, roll_schedule-1, contract_type=contract_type) 
@@ -372,7 +407,9 @@ def _calculate_nearby_data(df, k_nearby, roll_schedule, contract_type):
     }, index=df.index)
 
 def save_nth_nearby_new(df, symbol, k_nearby, roll_schedule, file_path, contract_type='monthly'):
-
+    '''
+    Save nearby data
+    '''
     tail = {'quarterly': 'Q', 'yearly': 'Y'}.get(contract_type, '')
     file_name = f'{file_path}/{symbol+tail}_{k_nearby}_{roll_schedule}.csv'
     
@@ -412,8 +449,9 @@ def save_nth_nearby_new(df, symbol, k_nearby, roll_schedule, file_path, contract
     print(f"Saved data to {file_name}")
 
 def load_future_data(data_path = './data/C5TC',values = 'close'):
-
-    
+    '''
+    Load future data
+    '''
     files = [f for f in os.listdir(data_path) if f.endswith('.csv')]
     dfs = (pd.read_csv(os.path.join(data_path, file)).assign(
         contract=file.replace('.csv', ''),
@@ -434,6 +472,9 @@ def get_last_trading_day(month_code):
 
 # only used for freight to calculate the final fixing given its not published on the exchange
 def calculate_fixing(symbol,contract_folder, spot_path):
+    '''
+    Calculate fixing data
+    '''
     spot_data = pd.read_csv(spot_path, index_col='date', parse_dates=True)
     start_date = pd.to_datetime('2017-01-04')
     end_time = list(spot_data.index)[-1]
@@ -471,6 +512,10 @@ def calculate_fixing(symbol,contract_folder, spot_path):
         
 
 def update_data():
+    '''
+    Update data from the sofrmar
+    main entry of this script
+    '''
     size_list = [ 'capesize','panamax','supermax']
     today = pd.Timestamp.now().normalize()
     start_date = (today - pd.Timedelta(weeks=4)).strftime('%Y-%m-%d')

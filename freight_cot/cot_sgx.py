@@ -56,7 +56,9 @@ logger = logging.getLogger(__name__)
 #---------------------------
 
 def get_nearest_previous(date: datetime = None, offset: int = 4) -> datetime:
-
+    '''
+    Get the nearest previous Friday
+    '''
     if date is None:
         date = datetime.now()
     
@@ -289,6 +291,9 @@ def process_function_SGX(file_path: str) -> pd.DataFrame:
 
 
 def generate_sgx_url(_date, future_only = True):
+    '''
+    Generate SGX URL
+    '''
     year = _date.strftime("%Y")
     month = _date.strftime("%m")
     formatted_date = _date.strftime("%d-%b-%Y")
@@ -303,6 +308,9 @@ def generate_sgx_url(_date, future_only = True):
 #---------------------------
 
 def send_email(subject, body, is_success=True, file_attachment=None):
+    '''
+    Function to send email
+    '''
     try:
         # Create Outlook application instance
         outlook = win32.Dispatch('Outlook.Application')
@@ -333,6 +341,9 @@ def send_email(subject, body, is_success=True, file_attachment=None):
 
 
 def job_wrapper():
+    '''
+    Main execution example
+    '''
     success = False
     body = ""
     try:

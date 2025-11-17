@@ -300,7 +300,9 @@ def check_eex_df(df: pd.DataFrame):
     
 
 def parse_eex_df(df: pd.DataFrame, _date: str, product_code: str):
-
+    '''
+    Parse the dataframe and return a dataframe with the parsed data
+    '''
     report_date = pd.to_datetime(df.loc[1, 'EUROPEAN ENERGY EXCHANGE'])
     default_row = 7 # is used to be 7 until eex changed the format in 2025 0930
     # errors = 0
@@ -342,6 +344,9 @@ def parse_eex_df(df: pd.DataFrame, _date: str, product_code: str):
     return parsed_df
 
 def process_all_file(from_folder: str, to_file: str ):
+    '''
+    Process all files in from_folder and save to to_file
+    '''
     local_file_exists = os.path.exists(to_file)
     if local_file_exists:
         try:
@@ -420,6 +425,9 @@ def process_all_file(from_folder: str, to_file: str ):
 
 
 def send_email(subject, body, is_success=True, file_attachment=None):
+    '''
+    Function to send email
+    '''
     try:
         # Create Outlook application instance
         outlook = win32.Dispatch('Outlook.Application')
@@ -448,6 +456,9 @@ def send_email(subject, body, is_success=True, file_attachment=None):
         mail.Send()
 
 def job_wrapper():
+    '''
+    Wrapper function to run the EEX COT job
+    '''
     try:
         logger.info("Starting EEX COT job wrapper")
         scraper = EEXScraper()
