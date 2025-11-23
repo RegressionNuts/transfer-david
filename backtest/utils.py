@@ -1,3 +1,8 @@
+#-------------------------
+# function used for backtest and analysis the backtest history
+#-------------------------
+
+
 import pickle
 import pandas as pd
 import json
