@@ -1,0 +1,1 @@
+{"start_date": "2018-01-08", "end_date": "2025-11-20", "roll_start": -12, "roll_schedule": "GHJKMNQUVXZF*", "roll_dates": 3, "max_position": 100, "longshort": -1, "roll_style": "monthly", "cost_type": "percentage", "roll_out": 0, "vol_target": 900000, "round": 1, "vol_series": "C:/Users/yuhang.hou/projects/transfer-david/data/series/P4TC/P4TC_0_9.csv"}

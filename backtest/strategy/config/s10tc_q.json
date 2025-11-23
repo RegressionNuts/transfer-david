@@ -1,0 +1,1 @@
+{"start_date": "2018-01-08", "end_date": "2025-11-20", "roll_start": -14, "roll_schedule": "QMQMQMQUQUQUQZQZQZQH*QH*QH*", "roll_dates": 5, "max_position": 200, "longshort": 1, "roll_style": "quarterly", "cost_type": "percentage", "roll_out": 1, "vol_target": 700000, "round": 1, "vol_series": "C:/Users/yuhang.hou/projects/transfer-david/data/series/S10TC/S10TCQ_0_14.csv"}

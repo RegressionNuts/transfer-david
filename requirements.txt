@@ -12,3 +12,4 @@ holidays
 pywin32
 matplotlib
 openpyxl
+seaborn
