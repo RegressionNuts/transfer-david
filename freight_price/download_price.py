@@ -308,6 +308,8 @@ def load_business_days():
     '''
     with open('freight_price/business_days.json', 'r') as f:
         business_days = json.load(f)
+        business_days = list(set(business_days))
+        business_days = sorted(business_days)
     return [pd.to_datetime(i) for i in business_days]
 
 def last_day_of_quarter(_date):
@@ -343,14 +345,17 @@ def date_to_month(_date, contract_type = 'monthly'):
     else:
         raise ValueError(f"Unsupported contract type: {contract_type}")
 
-def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly'):
+def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly',last_trading_days = None,buz_days = None):
     '''
     Get nth nearby contract
     '''
-    buz_days = load_business_days()
-    future_dates  =[ i  for i in buz_days if i > _date]  
+    if buz_days is None:
+        buz_days = load_business_days()
+    if last_trading_days is None:
+        with open('freight_price/last_trading_day.json', 'r') as f:
+            last_trading_days = json.load(f)
+    future_dates  =[ i  for i in buz_days if i >= _date]  
     new_date = future_dates[preroll]
-    # print(new_date,cmd)
     if contract_type == 'monthly':
         contract_date = new_date
     elif contract_type == 'quarterly':
@@ -358,8 +363,7 @@ def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly')
     else:
         contract_date = last_day_of_year(new_date + pd.DateOffset(years=1))
 
-
-    ltd = pd.to_datetime(get_last_trading_day(date_to_month(contract_date,contract_type)))
+    ltd = pd.to_datetime(last_trading_days[date_to_month(contract_date,contract_type)])
     month = contract_date.month + nth*CONTRACT_FACTOR[contract_type] - 1
     year = contract_date.year
     if new_date>=ltd: 
@@ -379,9 +383,12 @@ def _calculate_nearby_data(df, k_nearby, roll_schedule, contract_type):
     '''
     Calculate nearby data
     '''
-    k_nearby_spot = [nth_nearby(date, k_nearby, roll_schedule, contract_type=contract_type) 
+    buz_days = load_business_days()
+    with open('freight_price/last_trading_day.json', 'r') as f:
+        last_trading_days = json.load(f)
+    k_nearby_spot = [nth_nearby(date, k_nearby, roll_schedule, contract_type=contract_type,buz_days=buz_days, last_trading_days=last_trading_days) 
                     for date in df.index]
-    k_nearby_return = [nth_nearby(date, k_nearby, roll_schedule-1, contract_type=contract_type) 
+    k_nearby_return = [nth_nearby(date, k_nearby, roll_schedule-1, contract_type=contract_type,buz_days=buz_days, last_trading_days=last_trading_days) 
                       for date in df.index]
     
     nearby_spot = []
@@ -430,7 +437,6 @@ def save_nth_nearby_new(df, symbol, k_nearby, roll_schedule, file_path, contract
         
         validation_dates = df.index[(df.index >= start_date) & (df.index <= last_date)]
         recalculated = _calculate_nearby_data(df.loc[validation_dates], k_nearby, roll_schedule, contract_type)
-        
         _check_mismatch(existing_curve, recalculated, validation_dates, 'close')
         _check_mismatch(existing_curve, recalculated, validation_dates, 'return')
         _check_mismatch(existing_curve, recalculated, validation_dates, 'log_return')
@@ -533,8 +539,8 @@ def update_data():
             save_nth_nearby_new(contract_df,index_map[which_size], k_nearby, roll_schedule, f'./data/series/{index_map[which_size]}')
         for k_nearby,roll_schedule in quarterly:
             save_nth_nearby_new(contract_df,index_map[which_size], k_nearby, roll_schedule, f'./data/series/{index_map[which_size]}', contract_type='quarterly')
-        for k_nearby,roll_schedule in yearly:
-            save_nth_nearby_new(contract_df, index_map[which_size], k_nearby, roll_schedule, f'./data/series/{index_map[which_size]}',contract_type='yearly')
+        # for k_nearby,roll_schedule in yearly:
+        #     save_nth_nearby_new(contract_df, index_map[which_size], k_nearby, roll_schedule, f'./data/series/{index_map[which_size]}',contract_type='yearly')
         calculate_fixing(index_map[which_size],f'./data/{index_map[which_size]}', f'./data/series/{index_map[which_size]}/spot.csv')
         print(f'finished process {which_size}')
 
