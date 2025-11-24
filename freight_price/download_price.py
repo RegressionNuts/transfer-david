@@ -352,8 +352,7 @@ def nth_nearby(_date, nth, preroll = 7, cmd = 'C5TC', contract_type = 'monthly',
     if buz_days is None:
         buz_days = load_business_days()
     if last_trading_days is None:
-        with open('freight_price/last_trading_day.json', 'r') as f:
-            last_trading_days = json.load(f)
+        last_trading_days = load_last_trading_day()
     future_dates  =[ i  for i in buz_days if i >= _date]  
     new_date = future_dates[preroll]
     if contract_type == 'monthly':
@@ -384,8 +383,7 @@ def _calculate_nearby_data(df, k_nearby, roll_schedule, contract_type):
     Calculate nearby data
     '''
     buz_days = load_business_days()
-    with open('freight_price/last_trading_day.json', 'r') as f:
-        last_trading_days = json.load(f)
+    last_trading_days = load_last_trading_day()
     k_nearby_spot = [nth_nearby(date, k_nearby, roll_schedule, contract_type=contract_type,buz_days=buz_days, last_trading_days=last_trading_days) 
                     for date in df.index]
     k_nearby_return = [nth_nearby(date, k_nearby, roll_schedule-1, contract_type=contract_type,buz_days=buz_days, last_trading_days=last_trading_days) 
@@ -470,10 +468,13 @@ def load_future_data(data_path = './data/C5TC',values = 'close'):
     return pivot_df
 
 def get_last_trading_day(month_code):
-    with open('freight_price/last_trading_day.json', 'r') as f:
-        last_trading_days = json.load(f)
+    last_trading_days = load_last_trading_day()
     return last_trading_days[month_code]
 
+def load_last_trading_day():
+    with open('freight_price/last_trading_day.json', 'r') as f:
+        last_trading_days = json.load(f)
+    return last_trading_days
 
 
 # only used for freight to calculate the final fixing given its not published on the exchange
@@ -495,9 +496,12 @@ def calculate_fixing(symbol,contract_folder, spot_path):
                     res[month_code] = file_path
         return res
     contract_folder = loop_files_recursive(contract_folder)
+    last_trading_days = load_last_trading_day()
     for month_code,contract_path in contract_folder.items():
         existing_data = pd.read_csv(contract_path, index_col='date', parse_dates=True)
-        ltd = get_last_trading_day(month_code)
+        if month_code not in last_trading_days:
+            continue
+        ltd = last_trading_days[month_code]
         ltd = pd.to_datetime(ltd)
         if ltd<=end_time:           
             fixing_data = spot_data.loc[ltd.strftime('%Y-%m')]
